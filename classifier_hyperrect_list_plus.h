@@ -28,7 +28,7 @@ public:
     int classValue;
     int ruleSize; //size of the predicate array
     
-    std::vector<greater_than_test> rule;
+    std::vector<greater_than_test *> rule;
     
     classifier_hyperrect_list_plus();
     classifier_hyperrect_list_plus(const classifier_hyperrect_list_plus &orig,int son=0);
@@ -48,7 +48,7 @@ public:
     inline int doMatch(instance * ins)
     {
         for(int i = 0; i < rule.size(); i++) {
-            if (!rule.at(i).isTrue())
+            if (!rule.at(i)->isTrue())
                 return false;
         }
         return true;

@@ -29,21 +29,15 @@ extern Random rnd;
 
 double classifier_hyperrect_list_plus::computeTheoryLength()
 {
-    int i,j,base;
+    int i;
     theoryLength = 0.0;
     
-    float *ptr=predicates;
-    
     for(i=0;i<numAtt;i++) {
-        int att=whichAtt[i];
-        float size=ai.getSizeDomain(att);
-        float maxD=ai.getMaxDomain(att);
-        if(size>0) {
-            theoryLength += 1.0 - (maxD-ptr[0])/size;
-        }
-        ptr+=tReal->attributeSize[att];
+        // Using new greater_than_test class
+        theoryLength += rule.at(i)->computeLength();
     }
-    theoryLength/=(double)tGlobals->numAttributesMC;
+    
+    theoryLength /= (double)tGlobals->numAttributesMC;
     
     return theoryLength;
 }
@@ -58,91 +52,56 @@ classifier_hyperrect_list_plus::classifier_hyperrect_list_plus(const classifier_
     *this = orig;
     
     if (!son) {
-        whichAtt = new int[numAtt];
-        bcopy(orig.whichAtt, whichAtt, numAtt * sizeof(int));
-        
-        offsetPredicates = new int[numAtt];
-        bcopy(orig.offsetPredicates, offsetPredicates, numAtt * sizeof(int));
-        
-        predicates = new float[ruleSize];
-        bcopy(orig.predicates, predicates, ruleSize * sizeof(float));
+        rule = orig.rule;
     } else {
-        whichAtt = NULL;
-        predicates = NULL;
-        offsetPredicates=NULL;
+        rule.clear(); // Instead of "= NULL"
     }
 }
 
 classifier_hyperrect_list_plus::~classifier_hyperrect_list_plus()
 {
-    delete whichAtt;
-    delete predicates;
-    delete offsetPredicates;
+    
 }
 
 void classifier_hyperrect_list_plus::initializeChromosome()
 {
-    int i,j,base;
+    int i;
     
-    instance *ins=NULL;
+    instance *ins = NULL;
     if(tGlobals->smartInit) {
-        if(tGlobals->defaultClassPolicy!=DISABLED) {
-            ins=is->getInstanceInit(tGlobals->defaultClass);
+        if(tGlobals->defaultClassPolicy != DISABLED) {
+            ins = is->getInstanceInit(tGlobals->defaultClass);
         } else {
-            ins=is->getInstanceInit(ai.getNumClasses());
+            ins = is->getInstanceInit(ai.getNumClasses());
         }
     }
     
     JVector<int> selectedAtts;
-    ruleSize=0;
+    ruleSize = 0;
     
     if(tReal->fixExpAtt) {
         //Sampling samp(tGlobals->numAttributesMC);
-        for(i=0;i<tReal->numExpAtt;i++) {
+        for(i = 0; i < tReal->numExpAtt; i++) {
             //int selected = samp.getSample();
             int selected = tReal->sampAtts->getSample();
             selectedAtts.addElement(selected);
-            ruleSize+=tReal->attributeSize[selected];
+            ruleSize += tReal->attributeSize[selected];
         }
         sortList(selectedAtts);
     } else {
         for (i = 0; i < tGlobals->numAttributesMC; i++) {
-            if(!rnd>=tReal->probIrr) {
+            if(!rnd >= tReal->probIrr) {
                 selectedAtts.addElement(i);
-                ruleSize+=tReal->attributeSize[i];
+                ruleSize += tReal->attributeSize[i];
             }
         }
     }
     
-    numAtt=selectedAtts.size();
-    whichAtt = new int[numAtt];
-    offsetPredicates = new int[numAtt];
-    predicates = new float[ruleSize];
+    numAtt = selectedAtts.size();
     
-    for(i=0,base=0;i<numAtt;i++) {
-        offsetPredicates[i]=base;
-        int att=selectedAtts[i];
-        whichAtt[i]=att;
-        
-        float max,min;
-        float sizeD=ai.getSizeDomain(att);
-        float maxD=ai.getMaxDomain(att);
-        float size=(!rnd * tReal->rangeIntervalSizeInit + tReal->minIntervalSizeInit)*sizeD;
-        
-        max=maxD;
-        min=maxD-size;
-        
-        if(ins) {
-            float value=ins->realValues[att];
-            if(value<min) {
-                min=value;
-            }
-        }
-        
-        predicates[base]=min;
-        predicates[base+1]=max;
-        
-        base+=tReal->attributeSize[att];
+    for(i = 0; i < numAtt; i++) {
+        // Using new greater_than_test class
+        rule.push_back(new greater_than_test(selectedAtts[i], ins));
     }
     
     if(ins) {
@@ -162,6 +121,9 @@ void classifier_hyperrect_list_plus::crossover(classifier * in,
                   (classifier_hyperrect_list_plus *) out2);
 }
 
+/*
+ * Not needed after greater_than_test implemented
+ */
 float classifier_hyperrect_list_plus::mutationOffset(float geneValue, float offsetMin,
                                                      float offsetMax)
 {
@@ -176,34 +138,24 @@ float classifier_hyperrect_list_plus::mutationOffset(float geneValue, float offs
 
 void classifier_hyperrect_list_plus::mutation()
 {
-    int i;
-    int attribute, value,attIndex;
+    int attIndex;
     
     modif = 1;
     
-    if(tGlobals->numClasses>1 && !rnd<0.10) {
+    if(tGlobals->numClasses > 1 && !rnd < 0.10) {
         int newValue;
+        
         do {
-            newValue = rnd(0, ai.getNumClasses()-1);
-        } while (newValue == classValue || tGlobals->defaultClassPolicy!=DISABLED && newValue==tGlobals->defaultClass);
-        classValue=newValue;
+            newValue = rnd(0, ai.getNumClasses() - 1);
+        } while (newValue == classValue || tGlobals->defaultClassPolicy != DISABLED && newValue == tGlobals->defaultClass);
+        
+        classValue = newValue;
     } else {
-        if(numAtt>0) {
-            attIndex=rnd(0,numAtt-1);
-            attribute=whichAtt[attIndex];
-            value=0; //rnd(0,tReal->attributeSize[attribute]-1);
-            int index=offsetPredicates[attIndex]+value;
+        if(numAtt > 0) {
+            //Use new greater_than_test class
             
-            float newValue,minOffset,maxOffset;
-            minOffset = maxOffset = 0.5 * ai.getSizeDomain(attribute);
-            newValue = mutationOffset(predicates[index], minOffset, maxOffset);
-            if (newValue < ai.getMinDomain(attribute)) newValue = ai.getMinDomain(attribute);
-            if (newValue > ai.getMaxDomain(attribute)) newValue = ai.getMaxDomain(attribute);
-            predicates[index]=newValue;
-            if(value) index--;
-            /*if(predicates[index]>predicates[index+1]) {
-             swapD(predicates[index],predicates[index+1]);
-             }*/
+            attIndex = rnd(0, rule.size() - 1);
+            rule.at(attIndex)->mutate();
         }
     }
 }
@@ -217,7 +169,7 @@ void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
     
     for (int i = 0; i < numAtt; i++) {
         
-        int attIndex=whichAtt[i];
+        int attIndex = rule.at(i)->attribute; // Used to get the attribute minD, maxD and name
         
         float minD = ai.getMinDomain(attIndex);
         float maxD = ai.getMaxDomain(attIndex);
@@ -227,9 +179,9 @@ void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
         
         bool irr = false;
         
-        if(predicates[index]==minD) {
+        if(predicates[index] == minD) {
             
-            if(predicates[index+1]==maxD) {
+            if(predicates[index + 1] == maxD) {
                 // do nothing
                 irr = true;
             } else {
@@ -238,7 +190,7 @@ void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
             
         } else {
             
-            if(predicates[index+1]==maxD) {
+            if(predicates[index + 1] == maxD) {
                 att << "[>" << predicates[index] << "]" << "|";
             } else {
                 att << "[" << predicates[index] << "," << predicates[index + 1] << "]" << "|";
@@ -259,18 +211,20 @@ void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
 
 int classifier_hyperrect_list_plus::getSpecificity(int *indexes,double *specificity)
 {
-    int i,attIndex,index;
+    //    int i,attIndex,index;
+    //
+    //    for (i = 0,index=0; i < numAtt; i++) {
+    //        attIndex = rule.at(i)->attribute;
+    //
+    //        indexes[i]=attIndex;
+    //        specificity[i] = (predicates[index + 1] - predicates[index]) / ai.getSizeDomain(attIndex);
+    //
+    //        index+=tReal->attributeSize[attIndex];
+    //    }
+    //
+    //    return numAtt;
     
-    for (i = 0,index=0; i < numAtt; i++) {
-        attIndex=whichAtt[i];
-        
-        indexes[i]=attIndex;
-        specificity[i]=(predicates[index+1]-predicates[index])/ai.getSizeDomain(attIndex);
-        
-        index+=tReal->attributeSize[attIndex];
-    }
-    
-    return numAtt;
+    return 1; // Quick fix
 }
 
 /* Used to recombine lists of expressed attributes */
