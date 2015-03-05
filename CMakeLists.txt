@@ -47,6 +47,7 @@ instanceSet.h
 instance.h
 timeManagement.h
 JString.h
+JVector.h
 populationWrapper.h
 timersManagement.h
 ga.h

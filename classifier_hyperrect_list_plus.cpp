@@ -32,9 +32,9 @@ double classifier_hyperrect_list_plus::computeTheoryLength()
     int i;
     theoryLength = 0.0;
     
-    for(i=0;i<numAtt;i++) {
+    for(i = 0; i < rule.size(); i++) {
         // Using new greater_than_test class
-        theoryLength += rule.at(i)->computeLength();
+        theoryLength += rule[i].computeLength();
     }
     
     theoryLength /= (double)tGlobals->numAttributesMC;
@@ -53,8 +53,6 @@ classifier_hyperrect_list_plus::classifier_hyperrect_list_plus(const classifier_
     
     if (!son) {
         rule = orig.rule;
-    } else {
-        rule.clear(); // Instead of "= NULL"
     }
 }
 
@@ -65,7 +63,10 @@ classifier_hyperrect_list_plus::~classifier_hyperrect_list_plus()
 
 void classifier_hyperrect_list_plus::initializeChromosome()
 {
+    std::cout << "Initialize Chromosome" << std::endl;
+    
     int i;
+    int numAtt;
     
     instance *ins = NULL;
     if(tGlobals->smartInit) {
@@ -77,22 +78,17 @@ void classifier_hyperrect_list_plus::initializeChromosome()
     }
     
     JVector<int> selectedAtts;
-    ruleSize = 0;
     
     if(tReal->fixExpAtt) {
-        //Sampling samp(tGlobals->numAttributesMC);
         for(i = 0; i < tReal->numExpAtt; i++) {
-            //int selected = samp.getSample();
             int selected = tReal->sampAtts->getSample();
             selectedAtts.addElement(selected);
-            ruleSize += tReal->attributeSize[selected];
         }
         sortList(selectedAtts);
     } else {
         for (i = 0; i < tGlobals->numAttributesMC; i++) {
             if(!rnd >= tReal->probIrr) {
                 selectedAtts.addElement(i);
-                ruleSize += tReal->attributeSize[i];
             }
         }
     }
@@ -100,44 +96,21 @@ void classifier_hyperrect_list_plus::initializeChromosome()
     numAtt = selectedAtts.size();
     
     for(i = 0; i < numAtt; i++) {
-        // Using new greater_than_test class
-        rule.push_back(new greater_than_test(selectedAtts[i], ins));
+        rule.addElement(greater_than_test(selectedAtts[i], ins));
     }
     
     if(ins) {
-        classValue=ins->getClass();
+        classValue = ins->getClass();
     } else {
         do {
-            classValue=rnd(0,ai.getNumClasses()-1);
-        } while(tGlobals->defaultClassPolicy!=DISABLED && classValue==tGlobals->defaultClass);
+            classValue = rnd(0, ai.getNumClasses() - 1);
+        } while(tGlobals->defaultClassPolicy != DISABLED && classValue == tGlobals->defaultClass);
     }
-}
-
-void classifier_hyperrect_list_plus::crossover(classifier * in,
-                                               classifier * out1, classifier * out2)
-{
-    crossover_1px(this, (classifier_hyperrect_list_plus *) in,
-                  (classifier_hyperrect_list_plus *) out1,
-                  (classifier_hyperrect_list_plus *) out2);
-}
-
-/*
- * Not needed after greater_than_test implemented
- */
-float classifier_hyperrect_list_plus::mutationOffset(float geneValue, float offsetMin,
-                                                     float offsetMax)
-{
-    float newValue;
-    if (!rnd < 0.5) {
-        newValue = geneValue + !rnd * offsetMax;
-    } else {
-        newValue = geneValue - !rnd * offsetMin;
-    }
-    return newValue;
 }
 
 void classifier_hyperrect_list_plus::mutation()
 {
+    std::cout << "Mutation" << std::endl;
     int attIndex;
     
     modif = 1;
@@ -151,11 +124,11 @@ void classifier_hyperrect_list_plus::mutation()
         
         classValue = newValue;
     } else {
-        if(numAtt > 0) {
+        if(rule.size() > 0) {
             //Use new greater_than_test class
             
             attIndex = rnd(0, rule.size() - 1);
-            rule.at(attIndex)->mutate();
+            rule[attIndex].mutate();
         }
     }
 }
@@ -163,38 +136,28 @@ void classifier_hyperrect_list_plus::mutation()
 /* Print (put to String) */
 void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
 {
+    std::cout << "Dump Phenotype" << std::endl;
+    
     stringstream output;
     
     int index = 0;
     
-    for (int i = 0; i < numAtt; i++) {
+    for (int i = 0; i < rule.size(); i++) {
         
-        int attIndex = rule.at(i)->attribute; // Used to get the attribute minD, maxD and name
+        int attIndex = rule[i].attribute; // Used to get the attribute minD, maxD and name
         
         float minD = ai.getMinDomain(attIndex);
-        float maxD = ai.getMaxDomain(attIndex);
+        //        float maxD = ai.getMaxDomain(attIndex);
         
         stringstream att;
         att << "Att " << ai.getAttributeName(attIndex)->cstr() << " is ";
         
         bool irr = false;
         
-        if(predicates[index] == minD) {
-            
-            if(predicates[index + 1] == maxD) {
-                // do nothing
-                irr = true;
-            } else {
-                att << "[<" << predicates[index + 1] << "]" << "|";
-            }
-            
+        if (rule[i].threshold == minD) {
+            // Do nothing
         } else {
-            
-            if(predicates[index + 1] == maxD) {
-                att << "[>" << predicates[index] << "]" << "|";
-            } else {
-                att << "[" << predicates[index] << "," << predicates[index + 1] << "]" << "|";
-            }
+            att << "[>" << rule[i].threshold << "]" << "|";
         }
         
         if(!irr)
@@ -203,7 +166,7 @@ void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
         index += tReal->attributeSize[attIndex];
     }
     
-    output << ai.getNominalValue(tGlobals->numAttributesMC,classValue)->cstr() << "\n";
+    output << ai.getNominalValue(tGlobals->numAttributesMC, classValue)->cstr() << "\n";
     
     strcpy(string, output.str().c_str());
 }
@@ -211,20 +174,18 @@ void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
 
 int classifier_hyperrect_list_plus::getSpecificity(int *indexes,double *specificity)
 {
-    //    int i,attIndex,index;
-    //
-    //    for (i = 0,index=0; i < numAtt; i++) {
-    //        attIndex = rule.at(i)->attribute;
-    //
-    //        indexes[i]=attIndex;
-    //        specificity[i] = (predicates[index + 1] - predicates[index]) / ai.getSizeDomain(attIndex);
-    //
-    //        index+=tReal->attributeSize[attIndex];
-    //    }
-    //
-    //    return numAtt;
-    
+    std::cout << "Get Specificity" << std::endl;
     return 1; // Quick fix
+}
+
+void classifier_hyperrect_list_plus::crossover(classifier * in,
+                                               classifier * out1, classifier * out2)
+{
+    std::cout << "Crossover 3 params" << std::endl;
+    
+    crossover_1px(this, (classifier_hyperrect_list_plus *) in,
+                  (classifier_hyperrect_list_plus *) out1,
+                  (classifier_hyperrect_list_plus *) out2);
 }
 
 /* Used to recombine lists of expressed attributes */
@@ -233,254 +194,113 @@ void classifier_hyperrect_list_plus::crossover_1px(classifier_hyperrect_list_plu
                                                    classifier_hyperrect_list_plus * out1,
                                                    classifier_hyperrect_list_plus * out2)
 {
+    std::cout << "Crossover 4 params" << std::endl;
+    
     int i;
     
-    out1->modif = out2->modif = 1;
+    out1->modif = out2->modif = 1; // Not sure if necessary
     
-    if(in1->numAtt==0) {
-        classifier_hyperrect_list_plus *tmp=in2;
-        in2=in1;
-        in1=tmp;
+    // Making sure the first parent is not empty?
+    if(in1->rule.size() == 0) {
+        classifier_hyperrect_list_plus *tmp = in2;
+        in2 = in1;
+        in1 = tmp;
     }
     
-    if(in1->numAtt==0) {
-        out1->whichAtt=new int[out1->numAtt];
-        out2->whichAtt=new int[out2->numAtt];
-        out1->offsetPredicates=new int[out1->numAtt];
-        out2->offsetPredicates=new int[out2->numAtt];
-        out1->predicates=new float[out1->ruleSize];
-        out2->predicates=new float[out2->ruleSize];
+    // Probably not necessary
+    if(in1->rule.size() == 0) {
+        out1->rule.removeAllElements();
+        out2->rule.removeAllElements();
         return;
     }
     
-    int pos1=rnd(0,in1->numAtt-1);
-    int selAtt1=in1->whichAtt[pos1];
+    int cutPoint1 = rnd(0, in1->rule.size() - 1);
+    //    int selAtt1 = in1->rule.at(cutPoint1)->attribute;
     
-    for(i=0;i<in2->numAtt && in2->whichAtt[i]<selAtt1;i++);
-    int pos2=i;
-    int selAtt2;
-    if(pos2!=in2->numAtt) {
-        selAtt2=in2->whichAtt[pos2];
+    int cutPoint2 = rnd(0, in2->rule.size() - 1);
+    //    int selAtt2 = in2->rule.at(cutPoint2)->attribute;
+    
+    for (i = 0; i < cutPoint2; ++i) {
+        out2->rule.addElement(in2->rule[i]);
+    }
+    
+    for (i = cutPoint1; i < in1->rule.size(); ++i) {
+        out2->rule.addElement(in1->rule[i]);
+    }
+    
+    for (i = 0; i < cutPoint1; ++i) {
+        out1->rule.addElement(in1->rule[i]);
+    }
+    
+    for (i = cutPoint2; i < in2->rule.size(); ++i) {
+        out1->rule.addElement(in2->rule[i]);
+    }
+    
+    // Need to check if attribute in both chromosomes
+    
+    if(!rnd < 0.5) {
+        out1->classValue = in1->classValue;
+        out2->classValue = in2->classValue;
     } else {
-        selAtt2=-1;
-    }
-    
-    out1->numAtt=pos1+1+(in2->numAtt-pos2);
-    out2->numAtt=pos2+(in1->numAtt-pos1-1);
-    if(selAtt1==selAtt2) {
-        out1->numAtt--;
-        out2->numAtt++;
-    }
-    
-    out1->whichAtt=new int[out1->numAtt];
-    out2->whichAtt=new int[out2->numAtt];
-    out1->offsetPredicates = new int[out1->numAtt];
-    out2->offsetPredicates = new int[out2->numAtt];
-    
-    out1->ruleSize=0;
-    for(i=0;i<=pos1;i++) {
-        out1->whichAtt[i]=in1->whichAtt[i];
-        out1->offsetPredicates[i]=out1->ruleSize;
-        out1->ruleSize+=tReal->attributeSize[out1->whichAtt[i]];
-    }
-    int lenp1c1=out1->ruleSize;
-    int base=pos2;
-    if(selAtt1==selAtt2) {
-        base++;
-    }
-    for(;i<out1->numAtt;i++,base++) {
-        out1->whichAtt[i]=in2->whichAtt[base];
-        out1->offsetPredicates[i]=out1->ruleSize;
-        out1->ruleSize+=tReal->attributeSize[out1->whichAtt[i]];
-    }
-    
-    out2->ruleSize=0;
-    for(i=0;i<pos2;i++) {
-        out2->whichAtt[i]=in2->whichAtt[i];
-        out2->offsetPredicates[i]=out2->ruleSize;
-        out2->ruleSize+=tReal->attributeSize[out2->whichAtt[i]];
-    }
-    int lenp2c1=out2->ruleSize;
-    base=pos1;
-    if(selAtt1!=selAtt2) {
-        base++;
-    }
-    for(;i<out2->numAtt;i++,base++) {
-        out2->whichAtt[i]=in1->whichAtt[base];
-        out2->offsetPredicates[i]=out2->ruleSize;
-        out2->ruleSize+=tReal->attributeSize[out2->whichAtt[i]];
-    }
-    
-    out1->predicates=new float[out1->ruleSize];
-    out2->predicates=new float[out2->ruleSize];
-    
-    bcopy(in1->predicates,out1->predicates,lenp1c1*sizeof(float));
-    bcopy(in2->predicates,out2->predicates,lenp2c1*sizeof(float));
-    
-    if(selAtt1==selAtt2) {
-        int baseP1=in1->offsetPredicates[pos1];
-        int baseP2=in2->offsetPredicates[pos2];
-        int baseO1=out1->offsetPredicates[pos1];
-        int baseO2=out2->offsetPredicates[pos2];
-        
-        int cutPoint=rnd(0,2);
-        if(cutPoint==0) {
-            out1->predicates[baseO1]=in2->predicates[baseP2];
-            out1->predicates[baseO1+1]=in2->predicates[baseP2+1];
-            out2->predicates[baseO2]=in1->predicates[baseP1];
-            out2->predicates[baseO2+1]=in1->predicates[baseP1+1];
-        } else if(cutPoint==1) {
-            float min1=in1->predicates[baseP1];
-            float min2=in2->predicates[baseP2];
-            float max1=in2->predicates[baseP2+1];
-            float max2=in1->predicates[baseP1+1];
-            
-            //This should not happen in the modified representation
-            //if(min1>max1) swapD(min1,max1);
-            //if(min2>max2) swapD(min2,max2);
-            
-            out1->predicates[baseO1]=min1;
-            out1->predicates[baseO1+1]=max1;
-            out2->predicates[baseO2]=min2;
-            out2->predicates[baseO2+1]=max2;
-        } else {
-            out1->predicates[baseO1]=in1->predicates[baseP1];
-            out1->predicates[baseO1+1]=in1->predicates[baseP1+1];
-            out2->predicates[baseO2]=in2->predicates[baseP2];
-            out2->predicates[baseO2+1]=in2->predicates[baseP2+1];
-        }
-        pos2++;
-    } else {
-        int base1=in1->offsetPredicates[pos1];
-        out1->whichAtt[pos1]=selAtt1;
-        bcopy(&in1->predicates[base1],&out1->predicates[base1],tReal->attributeSize[selAtt1]*sizeof(float));
-    }
-    
-    pos1++;
-    if(pos1<in1->numAtt) {
-        bcopy(&in1->predicates[in1->offsetPredicates[pos1]]
-              ,&out2->predicates[out2->offsetPredicates[pos2]]
-              ,(in1->ruleSize-in1->offsetPredicates[pos1])*sizeof(float));
-    }
-    if(pos2<in2->numAtt) {
-        bcopy(&in2->predicates[in2->offsetPredicates[pos2]]
-              ,&out1->predicates[out1->offsetPredicates[pos1]]
-              ,(in2->ruleSize-in2->offsetPredicates[pos2])*sizeof(float));
-    }
-    
-    
-    if(!rnd<0.5) {
-        out1->classValue=in1->classValue;
-        out2->classValue=in2->classValue;
-    } else {
-        out1->classValue=in2->classValue;
-        out2->classValue=in1->classValue;
+        out1->classValue = in2->classValue;
+        out2->classValue = in1->classValue;
     }
 }
 
 void classifier_hyperrect_list_plus::postprocess()
 {
+    std::cout << "Post Process" << std::endl;
 }
 
 void classifier_hyperrect_list_plus::doSpecialStage(int stage)
 {
+    std::cout << "Do Special Stage" << std::endl;
+    
     int i;
-    if(stage==0) { //Generalize - remove attributes
-        if(numAtt>0 && !rnd<tReal->probGeneralizeList) {
-            int attribute=rnd(0,numAtt-1);
-            int deletedSize=tReal->attributeSize[whichAtt[attribute]];
+    
+    if (stage == 0) { //Generalize - remove attributes
+        if (rule.size() > 0 && !rnd < tReal->probGeneralizeList) {
             
-            int *newWhichAtt = new int[numAtt-1];
-            int *newOffsetPredicates = new int[numAtt-1];
-            float *newPredicates = new float[ruleSize-deletedSize];
+            int attribute = rnd(0, rule.size() - 1);
             
-            bcopy(whichAtt,newWhichAtt,attribute*sizeof(int));
-            bcopy(offsetPredicates,newOffsetPredicates,attribute*sizeof(int));
-            bcopy(predicates,newPredicates,offsetPredicates[attribute]*sizeof(float));
-            
-            if(attribute!=numAtt-1) {
-                bcopy(&whichAtt[attribute+1],&newWhichAtt[attribute],(numAtt-attribute-1)*sizeof(int));
-                bcopy(&offsetPredicates[attribute+1],&newOffsetPredicates[attribute]
-                      ,(numAtt-attribute-1)*sizeof(int));
-                bcopy(&predicates[offsetPredicates[attribute+1]],&newPredicates[offsetPredicates[attribute]]
-                      ,(ruleSize-offsetPredicates[attribute+1])*sizeof(float));
-            }
-            
-            
-            delete whichAtt;
-            whichAtt = newWhichAtt;
-            delete offsetPredicates;
-            offsetPredicates = newOffsetPredicates;
-            delete predicates;
-            predicates = newPredicates;
-            numAtt--;
-            ruleSize-=deletedSize;
-            
-            for(i=attribute;i<numAtt;i++) {
-                offsetPredicates[i]-=deletedSize;
-            }
+            rule.removeElementAt(attribute);
         }
     } else { //Specialize - add attributes
         
-        if(numAtt < tGlobals->numAttributesMC && !rnd<tReal->probSpecializeList) {
+        if(rule.size() < tGlobals->numAttributesMC && !rnd < tReal->probSpecializeList) {
+            
+            // Creates a map of attributes, 0 or 1 if present
             int attMap[tGlobals->numAttributesMC];
-            bzero(attMap,tGlobals->numAttributesMC*sizeof(int));
-            for(i=0;i<numAtt;i++) {
-                attMap[whichAtt[i]]=1;
+            bzero(attMap, tGlobals->numAttributesMC * sizeof(int));
+            for(i = 0; i < rule.size(); i++) {
+                attMap[rule[i].attribute] = 1;
             }
             
+            // Find an attribute that isn't expressed
             int selectedAtt;
             do {
-                selectedAtt=rnd(0,tGlobals->numAttributesMC-1);
-            } while(attMap[selectedAtt]==1);
+                selectedAtt = rnd(0, tGlobals->numAttributesMC - 1);
+            } while(attMap[selectedAtt] == 1);
             
-            int addedSize=tReal->attributeSize[selectedAtt];
-            int *newWhichAtt = new int[numAtt+1];
-            int *newOffsetPredicates = new int[numAtt+1];
-            float *newPredicates = new float[ruleSize+addedSize];
-            
-            int index=0,index2=0;
-            while(index<numAtt && whichAtt[index]<selectedAtt) {
-                newWhichAtt[index]=whichAtt[index];
-                newOffsetPredicates[index]=offsetPredicates[index];
-                bcopy(&predicates[index2],&newPredicates[index2]
-                      ,tReal->attributeSize[whichAtt[index]]*sizeof(float));
-                index2+=tReal->attributeSize[whichAtt[index]];
-                index++;
-            }
-            newWhichAtt[index]=selectedAtt;
-            newOffsetPredicates[index]=index2;
-            
-            float max,min;
-            float sizeD=ai.getSizeDomain(selectedAtt);
-            float maxD=ai.getMaxDomain(selectedAtt);
-            float size=(!rnd * tReal->rangeIntervalSizeInit + tReal->minIntervalSizeInit)*sizeD;
-            
-            max=maxD;
-            min=maxD-size;
-            
-            newPredicates[index2]=min;
-            newPredicates[index2+1]=max;
-            
-            if(index!=numAtt) {
-                bcopy(&whichAtt[index],&newWhichAtt[index+1],(numAtt-index)*sizeof(int));
-                bcopy(&offsetPredicates[index],&newOffsetPredicates[index+1],(numAtt-index)*sizeof(int));
-                bcopy(&predicates[index2],&newPredicates[index2+addedSize]
-                      ,(ruleSize-offsetPredicates[index])*sizeof(float));
+            instance *ins = NULL;
+            if(tGlobals->smartInit) {
+                if(tGlobals->defaultClassPolicy != DISABLED) {
+                    ins = is->getInstanceInit(tGlobals->defaultClass);
+                } else {
+                    ins = is->getInstanceInit(ai.getNumClasses());
+                }
             }
             
-            delete whichAtt;
-            whichAtt= newWhichAtt;
-            delete offsetPredicates;
-            offsetPredicates = newOffsetPredicates;
-            delete predicates;
-            predicates = newPredicates;
-            numAtt++;
-            ruleSize+=addedSize;
-            
-            for(i=index+1;i<numAtt;i++) {
-                offsetPredicates[i]+=addedSize;
+            for (int i = 0; i < rule.size(); ++i) {
+                std::cout << rule[i].attribute << std::endl;
             }
+            
+            int loc = greater_than_test::binarySearch(rule, 0, rule.size(), selectedAtt);
+            
+            std::cout << loc << std::endl;
+            
+            rule.insertElementAt(greater_than_test(selectedAtt, ins), loc);
+            
         }
     }
 }

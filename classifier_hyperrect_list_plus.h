@@ -1,7 +1,7 @@
 #ifndef _CLASSIFIER_HYPERRECT_LIST_PLUS_
 #define _CLASSIFIER_HYPERRECT_LIST_PLUS_
 
-#include <vector>
+#include "JVector.h"
 #include "classifier.h"
 #include "timerRealKR.h"
 #include "timerGlobals.h"
@@ -21,14 +21,8 @@ class classifier_hyperrect_list_plus: public classifier   {
     void initializeChromosome(void);
     
 public:
-//    float *predicates; //contain thresholds - upper/lower
-//    int *offsetPredicates; //position in the predicate array where the data for each att starts
-    int numAtt; //number of attributes included in the rule
-//    int *whichAtt; //list of the attributes (indexes)
+    JVector<greater_than_test> rule;
     int classValue;
-    int ruleSize; //size of the predicate array
-    
-    std::vector<greater_than_test *> rule;
     
     classifier_hyperrect_list_plus();
     classifier_hyperrect_list_plus(const classifier_hyperrect_list_plus &orig,int son=0);
@@ -48,7 +42,8 @@ public:
     inline int doMatch(instance * ins)
     {
         for(int i = 0; i < rule.size(); i++) {
-            if (!rule.at(i)->isTrue())
+            register float value = ins->realValues[rule[i].attribute];
+            if (!rule[i].isTrue(value))
                 return false;
         }
         return true;

@@ -20,6 +20,10 @@ public:
         
     }
     
+    inline greater_than_test(const greater_than_test &test) {
+        *this = test;
+    }
+    
     inline greater_than_test(int attIndex, instance *ins) : attribute(attIndex){
         float max, min;
         float sizeD = ai.getSizeDomain(attribute);
@@ -76,6 +80,40 @@ public:
         if (value >= threshold)
             return true;
         return false;
+    }
+    
+    inline greater_than_test& operator=(const greater_than_test& test) {
+        if (this != &test) {
+            attribute = test.attribute;
+            threshold = test.threshold;
+        }
+        return *this;
+    }
+    
+    inline static int binarySearch(JVector<greater_than_test> rule, int from, int to, int key) {
+        int low = from;
+        int high = to - 1;
+        
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            int midVal = rule[mid].attribute;
+            
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return low + 1;  // key not found.
+    }
+    
+    inline bool operator>(greater_than_test const& rhs) {
+        return attribute > rhs.attribute;
+    }
+    
+    inline bool operator<(greater_than_test const& rhs) {
+        return attribute < rhs.attribute;
     }
     
 };
