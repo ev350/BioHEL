@@ -54,6 +54,8 @@ ga.h
 factory.h
 attributesInfo.h
 greater_than_test.h
+less_than_test.h
+ratio_test.h
 timerHierar.h
 timerMDL.h
 timerSymbolicKR.h

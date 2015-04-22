@@ -32,9 +32,8 @@ double classifier_hyperrect_list_plus::computeTheoryLength()
     int i;
     theoryLength = 0.0;
     
-    for(i = 0; i < rule.size(); i++) {
-        // Using new greater_than_test class
-        theoryLength += rule[i].computeLength();
+    for(i = 0; i < rule->size(); i++) {
+        theoryLength += rule->at(i).computeLength();
     }
     
     theoryLength /= (double)tGlobals->numAttributesMC;
@@ -47,12 +46,13 @@ classifier_hyperrect_list_plus::classifier_hyperrect_list_plus()
     classifier_hyperrect_list_plus::initializeChromosome();
 }
 
+//
 classifier_hyperrect_list_plus::classifier_hyperrect_list_plus(const classifier_hyperrect_list_plus & orig, int son)
 {
     *this = orig;
     
     if (!son) {
-        rule = orig.rule;
+        rule = new vector<greater_than_test>(*orig.rule);
     }
 }
 
@@ -63,10 +63,9 @@ classifier_hyperrect_list_plus::~classifier_hyperrect_list_plus()
 
 void classifier_hyperrect_list_plus::initializeChromosome()
 {
-    std::cout << "Initialize Chromosome" << std::endl;
+    //    cout << "Initialize Chromosome" << endl;
     
     int i;
-    int numAtt;
     
     instance *ins = NULL;
     if(tGlobals->smartInit) {
@@ -93,10 +92,10 @@ void classifier_hyperrect_list_plus::initializeChromosome()
         }
     }
     
-    numAtt = selectedAtts.size();
+    rule = new vector<greater_than_test>();
     
-    for(i = 0; i < numAtt; i++) {
-        rule.addElement(greater_than_test(selectedAtts[i], ins));
+    for(i = 0; i < selectedAtts.size(); i++) {
+        rule->push_back(greater_than_test(selectedAtts[i], ins));
     }
     
     if(ins) {
@@ -110,7 +109,7 @@ void classifier_hyperrect_list_plus::initializeChromosome()
 
 void classifier_hyperrect_list_plus::mutation()
 {
-    std::cout << "Mutation" << std::endl;
+    //    cout << "Mutation" << endl;
     int attIndex;
     
     modif = 1;
@@ -124,11 +123,11 @@ void classifier_hyperrect_list_plus::mutation()
         
         classValue = newValue;
     } else {
-        if(rule.size() > 0) {
+        if(rule->size() > 0) {
             //Use new greater_than_test class
             
-            attIndex = rnd(0, rule.size() - 1);
-            rule[attIndex].mutate();
+            attIndex = rnd(0, rule->size() - 1);
+            rule->at(attIndex).mutate();
         }
     }
 }
@@ -136,34 +135,12 @@ void classifier_hyperrect_list_plus::mutation()
 /* Print (put to String) */
 void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
 {
-    std::cout << "Dump Phenotype" << std::endl;
+    //    cout << "Dump Phenotype" << endl;
     
     stringstream output;
     
-    int index = 0;
-    
-    for (int i = 0; i < rule.size(); i++) {
-        
-        int attIndex = rule[i].attribute; // Used to get the attribute minD, maxD and name
-        
-        float minD = ai.getMinDomain(attIndex);
-        //        float maxD = ai.getMaxDomain(attIndex);
-        
-        stringstream att;
-        att << "Att " << ai.getAttributeName(attIndex)->cstr() << " is ";
-        
-        bool irr = false;
-        
-        if (rule[i].threshold == minD) {
-            // Do nothing
-        } else {
-            att << "[>" << rule[i].threshold << "]" << "|";
-        }
-        
-        if(!irr)
-            output << att.str();
-        
-        index += tReal->attributeSize[attIndex];
+    for (int i = 0; i < rule->size(); i++) {
+        output << rule->at(i).getPhenotype();
     }
     
     output << ai.getNominalValue(tGlobals->numAttributesMC, classValue)->cstr() << "\n";
@@ -174,14 +151,14 @@ void classifier_hyperrect_list_plus::dumpPhenotype(char *string)
 
 int classifier_hyperrect_list_plus::getSpecificity(int *indexes,double *specificity)
 {
-    std::cout << "Get Specificity" << std::endl;
+    //    cout << "Get Specificity" << endl;
     return 1; // Quick fix
 }
 
 void classifier_hyperrect_list_plus::crossover(classifier * in,
                                                classifier * out1, classifier * out2)
 {
-    std::cout << "Crossover 3 params" << std::endl;
+    //    cout << "Crossover 3 params" << endl;
     
     crossover_1px(this, (classifier_hyperrect_list_plus *) in,
                   (classifier_hyperrect_list_plus *) out1,
@@ -194,87 +171,64 @@ void classifier_hyperrect_list_plus::crossover_1px(classifier_hyperrect_list_plu
                                                    classifier_hyperrect_list_plus * out1,
                                                    classifier_hyperrect_list_plus * out2)
 {
-    std::cout << "Crossover 4 params" << std::endl;
+//    cout << "Crossover 4 params" << endl;
     
-    int i;
+    vector<greater_than_test> *min_rule = in1->rule->size() < in2->rule->size() ? in1->rule : in2->rule;
+    vector<greater_than_test> *max_rule = in2->rule->size() >= in2->rule->size() ? in1->rule : in2-> rule;
     
-    out1->modif = out2->modif = 1; // Not sure if necessary
+    int cutPoint = rnd(0, max_rule->size() - 1);
     
-    // Making sure the first parent is not empty?
-    if(in1->rule.size() == 0) {
-        classifier_hyperrect_list_plus *tmp = in2;
-        in2 = in1;
-        in1 = tmp;
+    vector<greater_than_test>::const_iterator cut = max_rule->begin() + cutPoint;
+    vector<greater_than_test>::const_iterator last = max_rule->end();
+    vector<greater_than_test> max_rule_contrib(cut, last);
+    
+    max_rule->erase(cut, last);
+    
+    if (cutPoint <= min_rule->size()) {
+        max_rule->insert(max_rule->end(), min_rule->begin() + cutPoint, min_rule->end());
+        min_rule->erase(min_rule->begin() + cutPoint, min_rule->end());
     }
     
-    // Probably not necessary
-    if(in1->rule.size() == 0) {
-        out1->rule.removeAllElements();
-        out2->rule.removeAllElements();
-        return;
-    }
+    min_rule->insert(min_rule->end(), max_rule_contrib.begin(), max_rule_contrib.end());
     
-    int cutPoint1 = rnd(0, in1->rule.size() - 1);
-    //    int selAtt1 = in1->rule.at(cutPoint1)->attribute;
-    
-    int cutPoint2 = rnd(0, in2->rule.size() - 1);
-    //    int selAtt2 = in2->rule.at(cutPoint2)->attribute;
-    
-    for (i = 0; i < cutPoint2; ++i) {
-        out2->rule.addElement(in2->rule[i]);
-    }
-    
-    for (i = cutPoint1; i < in1->rule.size(); ++i) {
-        out2->rule.addElement(in1->rule[i]);
-    }
-    
-    for (i = 0; i < cutPoint1; ++i) {
-        out1->rule.addElement(in1->rule[i]);
-    }
-    
-    for (i = cutPoint2; i < in2->rule.size(); ++i) {
-        out1->rule.addElement(in2->rule[i]);
-    }
-    
-    // Need to check if attribute in both chromosomes
-    
-    if(!rnd < 0.5) {
-        out1->classValue = in1->classValue;
-        out2->classValue = in2->classValue;
-    } else {
-        out1->classValue = in2->classValue;
-        out2->classValue = in1->classValue;
-    }
+    out1->rule = min_rule;
+    out2->rule = max_rule;
 }
 
 void classifier_hyperrect_list_plus::postprocess()
 {
-    std::cout << "Post Process" << std::endl;
+    //    cout << "Post Process" << endl;
 }
 
 void classifier_hyperrect_list_plus::doSpecialStage(int stage)
 {
-    std::cout << "Do Special Stage" << std::endl;
+    //    cout << "Do Special Stage" << endl;
     
     int i;
     
     if (stage == 0) { //Generalize - remove attributes
-        if (rule.size() > 0 && !rnd < tReal->probGeneralizeList) {
+        if (rule->size() > 0 && !rnd < tReal->probGeneralizeList) {
             
-            int attribute = rnd(0, rule.size() - 1);
+            int attribute = rnd(0, rule->size() - 1);
             
-            rule.removeElementAt(attribute);
+            rule->erase(rule->begin() + attribute);
         }
     } else { //Specialize - add attributes
         
-        if(rule.size() < tGlobals->numAttributesMC && !rnd < tReal->probSpecializeList) {
+        // How to specialize when 2 attributes?
+        
+        if(rule->size() < tGlobals->numAttributesMC && !rnd < tReal->probSpecializeList) {
             
             // Creates a map of attributes, 0 or 1 if present
             int attMap[tGlobals->numAttributesMC];
             bzero(attMap, tGlobals->numAttributesMC * sizeof(int));
-            for(i = 0; i < rule.size(); i++) {
-                attMap[rule[i].attribute] = 1;
+            for(i = 0; i < rule->size(); i++) {
+                attMap[rule->at(i).attribute] = 1;
             }
+            
+            // create a function "presence?", pass array as argument then create bitmap
+            
+            // will need a factory later on to chose which one of the variants
             
             // Find an attribute that isn't expressed
             int selectedAtt;
@@ -291,15 +245,10 @@ void classifier_hyperrect_list_plus::doSpecialStage(int stage)
                 }
             }
             
-            for (int i = 0; i < rule.size(); ++i) {
-                std::cout << rule[i].attribute << std::endl;
-            }
             
-            int loc = greater_than_test::binarySearch(rule, 0, rule.size(), selectedAtt);
+            int loc = greater_than_test::binarySearch(*rule, 0, rule->size(), selectedAtt) - 1;
             
-            std::cout << loc << std::endl;
-            
-            rule.insertElementAt(greater_than_test(selectedAtt, ins), loc);
+            rule->insert(rule->begin() + loc, greater_than_test(selectedAtt, ins));
             
         }
     }

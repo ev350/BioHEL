@@ -1,61 +1,62 @@
 //
-//  greater_than_test.h
+//  less_than_test.h
 //  BioHEL
 //
 //  Created by Euan Cowie on 03/03/2015.
 //
 //
 
-#ifndef _GREATER_THAN_TEST_
-#define _GREATER_THAN_TEST_
+#ifndef _LESS_THAN_TEST_
+#define _LESS_THAN_TEST_
 
 #include "timerRealKR.h"
 #include <sstream>
 
 extern timerRealKR *tReal;
 
-class greater_than_test {
+class less_than_test {
     
 public:
     int attribute;
     float threshold;
     
-    inline ~greater_than_test() {
+    inline ~less_than_test() {
         
     }
     
-    inline greater_than_test(const greater_than_test &test) {
+    inline less_than_test(const less_than_test &test) {
         *this = test;
     }
     
-    inline greater_than_test(int attIndex, instance *ins) : attribute(attIndex){
+    inline less_than_test(int attIndex, instance *ins) : attribute(attIndex){
         float max, min;
-        float sizeD = ai.getSizeDomain(attribute);
-        float maxD = ai.getMaxDomain(attribute);
+        float sizeD = ai.getSizeDomain(attIndex);
+        float minD = ai.getMinDomain(attIndex);
         float size = (!rnd * tReal->rangeIntervalSizeInit + tReal->minIntervalSizeInit) * sizeD;
         
-        max = maxD;
-        min = maxD - size;
+        min = minD;
+        max = min+size;
         
         if(ins) {
-            float value = ins->realValues[attribute];
-            if(value < min) {
-                min = value;
+            float value = ins->realValues[attIndex];
+            if(value > max) {
+                max = value;
             }
         }
         
-        threshold = min;
+        threshold = max;
     }
     
     inline double computeLength() {
         double length = 0.0;
         
-        float size = ai.getSizeDomain(attribute);
-        float maxD = ai.getMaxDomain(attribute);
+        float size=ai.getSizeDomain(attribute);
+        float minD=ai.getMinDomain(attribute);
         
         if(size > 0) {
-            length = 1.0 - (maxD - threshold) / size;
+            length += 1.0 - (threshold - minD) / size;
         }
+        
         return length;
     }
     
@@ -82,18 +83,18 @@ public:
     
     inline string getPhenotype() {
         
-        float minD = ai.getMinDomain(attribute);
-        // float maxD = ai.getMaxDomain(attIndex);
+//        float minD = ai.getMinDomain(attribute);
+         float maxD = ai.getMaxDomain(attribute);
         
         stringstream att;
         att << "Att " << ai.getAttributeName(attribute)->cstr() << " is ";
         
         bool irr = false;
-        if (threshold == minD) {
+        if (threshold == maxD) {
             // Do nothing
             irr = true;
         } else {
-            att << "[>" << threshold << "]" << "|";
+            att << "[<" << threshold << "]" << "|";
         }
         
         if (!irr)
@@ -105,12 +106,12 @@ public:
     inline bool isTrue(instance *ins) {
         register float value = ins->realValues[attribute];
         
-        if (value >= threshold)
+        if (value < threshold)
             return true;
         return false;
     }
     
-    inline greater_than_test& operator=(const greater_than_test& test) {
+    inline less_than_test& operator=(const less_than_test& test) {
         if (this != &test) {
             attribute = test.attribute;
             threshold = test.threshold;
@@ -118,7 +119,7 @@ public:
         return *this;
     }
     
-    inline static int binarySearch(std::vector<greater_than_test> rule, int from, int to, int key) {
+    inline static int binarySearch(std::vector<less_than_test> rule, int from, int to, int key) {
         int low = from;
         int high = to - 1;
         
@@ -136,11 +137,11 @@ public:
         return low + 1;  // key not found.
     }
     
-    inline bool operator>(greater_than_test const& rhs) {
+    inline bool operator>(less_than_test const& rhs) {
         return attribute > rhs.attribute;
     }
     
-    inline bool operator<(greater_than_test const& rhs) {
+    inline bool operator<(less_than_test const& rhs) {
         return attribute < rhs.attribute;
     }
     
