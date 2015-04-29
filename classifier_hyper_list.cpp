@@ -1,4 +1,12 @@
-#include "classifier_hyperrect_list_less.h"
+//
+//  classifier_hyper_list.cpp
+//  BioHEL
+//
+//  Created by Euan Cowie on 23/04/2015.
+//
+
+#include "classifier_hyper_list.h"
+#include "testFactory.h"
 #include "random.h"
 #include <stdlib.h>
 #include <math.h>
@@ -27,13 +35,13 @@ extern timerRealKR *tReal;
 extern instanceSet *is;
 extern Random rnd;
 
-double classifier_hyperrect_list_less::computeTheoryLength()
+double classifier_hyper_list::computeTheoryLength()
 {
     int i;
     theoryLength = 0.0;
     
     for(i = 0; i < rule->size(); i++) {
-        theoryLength += rule->at(i).computeLength();
+        theoryLength += rule->at(i)->computeLength();
     }
     
     theoryLength /= (double)tGlobals->numAttributesMC;
@@ -41,27 +49,26 @@ double classifier_hyperrect_list_less::computeTheoryLength()
     return theoryLength;
 }
 
-classifier_hyperrect_list_less::classifier_hyperrect_list_less()
+classifier_hyper_list::classifier_hyper_list(test::Type type) : type(type)
 {
-    classifier_hyperrect_list_less::initializeChromosome();
+    classifier_hyper_list::initializeChromosome();
 }
 
-//
-classifier_hyperrect_list_less::classifier_hyperrect_list_less(const classifier_hyperrect_list_less & orig, int son)
+classifier_hyper_list::classifier_hyper_list(const classifier_hyper_list & orig, int son)
 {
     *this = orig;
     
     if (!son) {
-        rule = new vector<less_than_test>(*orig.rule);
+        rule = new vector<test*>(*orig.rule);
     }
 }
 
-classifier_hyperrect_list_less::~classifier_hyperrect_list_less()
+classifier_hyper_list::~classifier_hyper_list()
 {
     
 }
 
-void classifier_hyperrect_list_less::initializeChromosome()
+void classifier_hyper_list::initializeChromosome()
 {
     //    cout << "Initialize Chromosome" << endl;
     
@@ -92,10 +99,11 @@ void classifier_hyperrect_list_less::initializeChromosome()
         }
     }
     
-    rule = new vector<less_than_test>();
+    rule = new vector<test*>();
     
     for(i = 0; i < selectedAtts.size(); i++) {
-        rule->push_back(less_than_test(selectedAtts[i], ins));
+        auto newTest = testFactory::createInstance(type, selectedAtts[i], ins);
+        rule->push_back(newTest);
     }
     
     if(ins) {
@@ -107,7 +115,7 @@ void classifier_hyperrect_list_less::initializeChromosome()
     }
 }
 
-void classifier_hyperrect_list_less::mutation()
+void classifier_hyper_list::mutation()
 {
     //    cout << "Mutation" << endl;
     int attIndex;
@@ -124,23 +132,23 @@ void classifier_hyperrect_list_less::mutation()
         classValue = newValue;
     } else {
         if(rule->size() > 0) {
-            //Use new less_than_test class
+            //Use new test class
             
             attIndex = rnd(0, rule->size() - 1);
-            rule->at(attIndex).mutate();
+            rule->at(attIndex)->mutate();
         }
     }
 }
 
 /* Print (put to String) */
-void classifier_hyperrect_list_less::dumpPhenotype(char *string)
+void classifier_hyper_list::dumpPhenotype(char *string)
 {
     //    cout << "Dump Phenotype" << endl;
     
     stringstream output;
     
     for (int i = 0; i < rule->size(); i++) {
-        output << rule->at(i).getPhenotype();
+        output << rule->at(i)->getPhenotype();
     }
     
     output << ai.getNominalValue(tGlobals->numAttributesMC, classValue)->cstr() << "\n";
@@ -149,38 +157,38 @@ void classifier_hyperrect_list_less::dumpPhenotype(char *string)
 }
 
 
-int classifier_hyperrect_list_less::getSpecificity(int *indexes,double *specificity)
+int classifier_hyper_list::getSpecificity(int *indexes,double *specificity)
 {
     //    cout << "Get Specificity" << endl;
     return 1; // Quick fix
 }
 
-void classifier_hyperrect_list_less::crossover(classifier * in,
+void classifier_hyper_list::crossover(classifier * in,
                                                classifier * out1, classifier * out2)
 {
     //    cout << "Crossover 3 params" << endl;
     
-    crossover_1px(this, (classifier_hyperrect_list_less *) in,
-                  (classifier_hyperrect_list_less *) out1,
-                  (classifier_hyperrect_list_less *) out2);
+    crossover_1px(this, (classifier_hyper_list *) in,
+                  (classifier_hyper_list *) out1,
+                  (classifier_hyper_list *) out2);
 }
 
 /* Used to recombine lists of expressed attributes */
-void classifier_hyperrect_list_less::crossover_1px(classifier_hyperrect_list_less * in1,
-                                                   classifier_hyperrect_list_less * in2,
-                                                   classifier_hyperrect_list_less * out1,
-                                                   classifier_hyperrect_list_less * out2)
+void classifier_hyper_list::crossover_1px(classifier_hyper_list * in1,
+                                                   classifier_hyper_list * in2,
+                                                   classifier_hyper_list * out1,
+                                                   classifier_hyper_list * out2)
 {
     //    cout << "Crossover 4 params" << endl;
     
-    vector<less_than_test> *min_rule = in1->rule->size() < in2->rule->size() ? in1->rule : in2->rule;
-    vector<less_than_test> *max_rule = in2->rule->size() >= in2->rule->size() ? in1->rule : in2-> rule;
+    vector<test*> *min_rule = in1->rule->size() < in2->rule->size() ? in1->rule : in2->rule;
+    vector<test*> *max_rule = in2->rule->size() >= in2->rule->size() ? in1->rule : in2-> rule;
     
     int cutPoint = rnd(0, max_rule->size() - 1);
     
-    vector<less_than_test>::const_iterator cut = max_rule->begin() + cutPoint;
-    vector<less_than_test>::const_iterator last = max_rule->end();
-    vector<less_than_test> max_rule_contrib(cut, last);
+    vector<test*>::const_iterator cut = max_rule->begin() + cutPoint;
+    vector<test*>::const_iterator last = max_rule->end();
+    vector<test*> max_rule_contrib(cut, last);
     
     max_rule->erase(cut, last);
     
@@ -195,12 +203,12 @@ void classifier_hyperrect_list_less::crossover_1px(classifier_hyperrect_list_les
     out2->rule = max_rule;
 }
 
-void classifier_hyperrect_list_less::postprocess()
+void classifier_hyper_list::postprocess()
 {
     //    cout << "Post Process" << endl;
 }
 
-void classifier_hyperrect_list_less::doSpecialStage(int stage)
+void classifier_hyper_list::doSpecialStage(int stage)
 {
     //    cout << "Do Special Stage" << endl;
     
@@ -223,8 +231,12 @@ void classifier_hyperrect_list_less::doSpecialStage(int stage)
             int attMap[tGlobals->numAttributesMC];
             bzero(attMap, tGlobals->numAttributesMC * sizeof(int));
             for(i = 0; i < rule->size(); i++) {
-                attMap[rule->at(i).attribute] = 1;
+                attMap[rule->at(i)->attribute] = 1;
             }
+            
+            // create a function "presence?", pass array as argument then create bitmap
+            
+            // will need a factory later on to chose which one of the variants
             
             // Find an attribute that isn't expressed
             int selectedAtt;
@@ -242,14 +254,12 @@ void classifier_hyperrect_list_less::doSpecialStage(int stage)
             }
             
             
-            //            cout << "Size: " << rule->size() << endl;
+            int loc = classifier_hyper_list::binarySearch(*rule, 0, rule->size(), selectedAtt) - 1;
             
-            int loc = less_than_test::binarySearch(*rule, 0, rule->size(), selectedAtt) - 1;
-            //            cout << "Pos: " << loc << endl;
+            auto newTest = testFactory::createInstance(type, selectedAtt, ins);
             
-            rule->insert(rule->begin() + loc, less_than_test(selectedAtt, ins));
+            rule->insert(rule->begin() + loc, newTest); //Select type
             
         }
     }
 }
-

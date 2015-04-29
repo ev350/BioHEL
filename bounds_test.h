@@ -1,60 +1,71 @@
 //
-//  greater_than_test.h
+//  bounds_test.h
 //  BioHEL
 //
-//  Created by Euan Cowie on 03/03/2015.
+//  Created by Euan Cowie on 23/04/2015.
 //
 //
 
-#ifndef _GREATER_THAN_TEST_
-#define _GREATER_THAN_TEST_
+#ifndef BioHEL_bounds_test_h
+#define BioHEL_bounds_test_h
 
 #include "test.h"
 #include <sstream>
 
-class greater_than_test : public test {
+class bounds_test : public test {
+    
+    float threshold1;
     
 public:
     
-    greater_than_test(const greater_than_test &test) {
+    bounds_test(const greater_than_test &test) {
         *this = test;
     }
     
-    greater_than_test(int attIndex, instance *ins) {
+    bounds_test(int attIndex, instance *ins) {
         attribute = attIndex;
         
         float max, min;
         float sizeD = ai.getSizeDomain(attribute);
+        float minD = ai.getMinDomain(attribute);
         float maxD = ai.getMaxDomain(attribute);
         float size = (!rnd * tReal->rangeIntervalSizeInit + tReal->minIntervalSizeInit) * sizeD;
         
-        max = maxD;
-        min = maxD - size;
-        
         if(ins) {
-            float value = ins->realValues[attribute];
-            if(value < min) {
-                min = value;
+            float val = ins->realValues[attribute];
+            min = val-size/2.0;
+            max = val+size/2.0;
+            if(min < minD) {
+                max += minD - min;
+                min = minD;
             }
+            if(max > maxD) {
+                min -= max - maxD;
+                max = maxD;
+            }
+        } else {
+            min=!rnd*(sizeD-size)+minD;
+            max=min+size;
         }
         
         threshold = min;
+        threshold1 = max;
     }
     
     virtual string getPhenotype() const {
         
         float minD = ai.getMinDomain(attribute);
-        // float maxD = ai.getMaxDomain(attIndex);
+//        float maxD = ai.getMaxDomain(attribute);
         
         stringstream att;
         att << "Att " << ai.getAttributeName(attribute)->cstr() << " is ";
         
-        bool irr = false;
+        bool irr = true;
         if (threshold == minD) {
-            // Do nothing
-            irr = true;
+
         } else {
-            att << "[>" << threshold << "]" << "|";
+            irr = false;
+            att << "[" << threshold << "," << threshold1 << "]" << "|";
         }
         
         if (!irr)
@@ -66,15 +77,16 @@ public:
     virtual bool isTrue(instance *ins) const {
         register float value = ins->realValues[attribute];
         
-        if (value >= threshold)
+        if (value > threshold || value < threshold1)
             return true;
         return false;
     }
     
-    virtual greater_than_test& operator=(const greater_than_test& test) {
+    virtual bounds_test& operator=(const bounds_test& test) {
         if (this != &test) {
             attribute = test.attribute;
             threshold = test.threshold;
+            threshold1 = test.threshold1;
         }
         return *this;
     }

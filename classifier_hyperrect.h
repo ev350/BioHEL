@@ -51,7 +51,7 @@ public:
 				if (min<max && ((valueAtr < min) || (valueAtr > max)))
 					return 0;
 			} else {
-				int valueAtr = (unsigned char)ins->realValues[j];
+				int valueAtr = (unsigned char) ins->realValues[j];
 				if (cAtr[valueAtr] == 0) {
 					return 0;
 				}

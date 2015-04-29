@@ -35,7 +35,7 @@ public:
      binary is positive or negate, x/y or y/x
      check if resulting is greater than the fold change (ratio value)
      */
-    inline ratio_test(int attIndex1, int attIndex2, instance *ins) : attribute1(attIndex1), attribute2(attIndex2){
+    inline ratio_test(int attIndex1, int attIndex2, instance *ins) : attribute1(attIndex1), attribute2(attIndex2) {
         float max, min;
         float sizeD = ai.getSizeDomain(attribute1);
         float maxD = ai.getMaxDomain(attribute1);
@@ -125,23 +125,23 @@ public:
         return *this;
     }
     
-    inline static int binarySearch(std::vector<ratio_test> rule, int from, int to, int key) {
-        int low = from;
-        int high = to - 1;
-        
-        while (low <= high) {
-            int mid = (low + high) >> 1;
-            int midVal = rule[mid].attribute1;
-            
-            if (midVal < key)
-                low = mid + 1;
-            else if (midVal > key)
-                high = mid - 1;
-            else
-                return mid; // key found
-        }
-        return low + 1;  // key not found.
-    }
+//    inline static int binarySearch(std::vector<ratio_test> rule, int from, int to, int key) {
+//        int low = from;
+//        int high = to - 1;
+//        
+//        while (low <= high) {
+//            int mid = (low + high) >> 1;
+//            int midVal = rule[mid].attribute1;
+//            
+//            if (midVal < key)
+//                low = mid + 1;
+//            else if (midVal > key)
+//                high = mid - 1;
+//            else
+//                return mid; // key found
+//        }
+//        return low + 1;  // key not found.
+//    }
     
     inline bool operator>(ratio_test const& rhs) {
         return attribute1 > rhs.attribute1;

@@ -1,13 +1,13 @@
 #include "factory.h"
 
+#include "test.h"
 #include "classifier_gabil.h"
 //#include "classifier_lcs.h"
 //#include "classifier_adaptive.h"
+#include "classifier_hyper_list.h"
 #include "classifier_hyperrect.h"
 #include "classifier_hyperrect_list.h"
 #include "classifier_hyperrect_list_real.h"
-#include "classifier_hyperrect_list_plus.h"
-#include "classifier_hyperrect_list_less.h"
 #include "classifier_hyperrect_list_ratio.h"
 //#include "classifier_hyperrect_sse.h"
 //#include "classifier_rotated_hyperrect.h"
@@ -24,142 +24,56 @@ extern timerGlobals *tGlobals;
 
 classifierFactory::classifierFactory()
 {
-
-	/*if (cm.thereIsParameter(KR_ADI))
-		classifierType = KR_ADI;*/
-	/*else*/ 
-	if (cm.thereIsParameter(KR_HYPERRECT)) {
-		if(cm.thereIsParameter(HYPERRECT_LIST)) {
-			if(ai.onlyRealValuedAttributes()) {
-				if(cm.thereIsParameter(USE_GREATER_THAN_PREDICATES)) {
-					classifierType = KR_HYPERRECT_LIST_PLUS;
-				} else if(cm.thereIsParameter(USE_LESS_THAN_PREDICATES)) {
-					classifierType = KR_HYPERRECT_LIST_LESS;
-				} else if(cm.thereIsParameter(USE_RATIO_PREDICATES)) {
-					classifierType = KR_HYPERRECT_LIST_RATIO;
-				} else {
-					classifierType = KR_HYPERRECT_LIST_REAL;
-				}
-			} else {
-				classifierType = KR_HYPERRECT_LIST;
-			}
-		} else {
-			/*if(ai.onlyRealValuedAttributes()) {
-				if(cm.thereIsParameter(ROTATE_HYPERRECTANGLES)) {
-					classifierType = KR_ROTATED_HYPERRECT;
-				} else {
-					classifierType = KR_HYPERRECT_SSE;
-				}
-			} else {*/
-				classifierType = KR_HYPERRECT;
-			//}
-		}
-	/*else if (cm.thereIsParameter(KR_INSTANCE_SET))
-		classifierType = KR_INSTANCE_SET;
-	else if (cm.thereIsParameter(KR_LCS))
-		classifierType = KR_LCS;*/
-	} else {
-		classifierType = KR_GABIL;
-	}
-
-	//mb.printf("Classifier type: %d\n",classifierType);
+    
+    if (cm.thereIsParameter(KR_HYPERRECT)) {
+        if(cm.thereIsParameter(HYPERRECT_LIST)) {
+            if(ai.onlyRealValuedAttributes()) {
+                if(cm.thereIsParameter(USE_GREATER_THAN_PREDICATES)) {
+                    classifierType = KR_HYPERRECT_LIST_PLUS;
+                } else if(cm.thereIsParameter(USE_LESS_THAN_PREDICATES)) {
+                    classifierType = KR_HYPERRECT_LIST_LESS;
+                } else if(cm.thereIsParameter(USE_RATIO_PREDICATES)) {
+                    classifierType = KR_HYPERRECT_LIST_RATIO;
+                } else {
+                    classifierType = KR_HYPERRECT_LIST_REAL;
+                }
+            } else {
+                classifierType = KR_HYPERRECT_LIST;
+            }
+        } else {
+            classifierType = KR_HYPERRECT;
+        }
+    } else {
+        classifierType = KR_GABIL;
+    }
 }
 
 
 classifier *classifierFactory::createClassifier()
 {
-	/*if (classifierType == KR_ADI)
-		return new classifier_adaptive();*/
-	if (classifierType == KR_HYPERRECT)
-		return new classifier_hyperrect();
-	//if (classifierType == KR_ROTATED_HYPERRECT)
-	//	return new classifier_rotated_hyperrect();
-	//if (classifierType == KR_HYPERRECT_SSE)
-	//	return new classifier_hyperrect_sse();
-	if (classifierType == KR_HYPERRECT_LIST)
-		return new classifier_hyperrect_list();
-	if (classifierType == KR_HYPERRECT_LIST_REAL)
-		return new classifier_hyperrect_list_real();
-	if (classifierType == KR_HYPERRECT_LIST_PLUS)
-		return new classifier_hyperrect_list_plus();
-	if (classifierType == KR_HYPERRECT_LIST_LESS)
-		return new classifier_hyperrect_list_less();
-	if (classifierType == KR_HYPERRECT_LIST_RATIO)
-		return new classifier_hyperrect_list_ratio();
-	/*if (classifierType == KR_INSTANCE_SET)
-		return new classifier_instances();
-	if (classifierType == KR_LCS)
-		return new classifier_lcs();*/
-	return new classifier_gabil();
+    if (classifierType == KR_HYPERRECT)
+        return new classifier_hyperrect();
+    if (classifierType == KR_HYPERRECT_LIST)
+        return new classifier_hyperrect_list();
+    if (classifierType == KR_HYPERRECT_LIST_REAL)
+        return new classifier_hyper_list(test::Bounds);
+    if (classifierType == KR_HYPERRECT_LIST_PLUS)
+        return new classifier_hyper_list(test::Greater);
+    if (classifierType == KR_HYPERRECT_LIST_LESS)
+        return new classifier_hyper_list(test::Less);
+    if (classifierType == KR_HYPERRECT_LIST_RATIO)
+        return new classifier_hyper_list(test::Ratio);
+    
+    return new classifier_gabil();
 }
 
 
 classifier *classifierFactory::cloneClassifier(classifier * orig, int son)
 {
-	/*if (classifierType == KR_ADI)
-		return new classifier_adaptive(
-			*((classifier_adaptive *) orig), son);*/
-
-	if (classifierType == KR_HYPERRECT)
-		return new classifier_hyperrect(
-			*((classifier_hyperrect *) orig), son);
-	//if (classifierType == KR_HYPERRECT_SSE)
-	//	return new classifier_hyperrect_sse(
-	//		*((classifier_hyperrect_sse *) orig), son);
-	if (classifierType == KR_HYPERRECT_LIST)
-		return new classifier_hyperrect_list(
-			*((classifier_hyperrect_list *) orig), son);
-	if (classifierType == KR_HYPERRECT_LIST_REAL)
-		return new classifier_hyperrect_list_real(
-			*((classifier_hyperrect_list_real *) orig), son);
-	if (classifierType == KR_HYPERRECT_LIST_PLUS)
-		return new classifier_hyperrect_list_plus(
-			*((classifier_hyperrect_list_plus *) orig), son);
-	if (classifierType == KR_HYPERRECT_LIST_LESS)
-		return new classifier_hyperrect_list_less(
-			*((classifier_hyperrect_list_less *) orig), son);
-	if (classifierType == KR_HYPERRECT_LIST_RATIO)
-		return new classifier_hyperrect_list_ratio(
-			*((classifier_hyperrect_list_ratio *) orig), son);
-	//if (classifierType == KR_ROTATED_HYPERRECT)
-	//	return new classifier_rotated_hyperrect(
-	//		*((classifier_rotated_hyperrect *) orig), son);
-
-	/*if (classifierType == KR_INSTANCE_SET)
-		return new classifier_instances(
-			*((classifier_instances *) orig), son);
-
-	if (classifierType == KR_LCS)
-		return new classifier_lcs(
-			*((classifier_lcs *) orig), son);*/
-
-	return new classifier_gabil(*((classifier_gabil *)orig),son);
+    return new classifier_hyper_list(*((classifier_hyper_list *) orig), son);
 }
 
 void classifierFactory::deleteClassifier(classifier * ind)
 {
-	/*if (classifierType == KR_ADI)
-		delete(classifier_adaptive *) ind;
-	else*/ if (classifierType == KR_HYPERRECT)
-		delete(classifier_hyperrect *) ind;
-		//else if (classifierType == KR_HYPERRECT_SSE)
-		//	delete(classifier_hyperrect_sse *) ind;
-		else if (classifierType == KR_HYPERRECT_LIST)
-			delete(classifier_hyperrect_list *) ind;
-		else if (classifierType == KR_HYPERRECT_LIST_REAL)
-			delete(classifier_hyperrect_list_real *) ind;
-		else if (classifierType == KR_HYPERRECT_LIST_PLUS)
-			delete(classifier_hyperrect_list_plus *) ind;
-		else if (classifierType == KR_HYPERRECT_LIST_LESS)
-			delete(classifier_hyperrect_list_less *) ind;
-		else if (classifierType == KR_HYPERRECT_LIST_RATIO)
-			delete(classifier_hyperrect_list_ratio *) ind;
-		//else if (classifierType == KR_ROTATED_HYPERRECT)
-		//	delete(classifier_rotated_hyperrect *) ind;
-	/*else if (classifierType == KR_INSTANCE_SET)
-		delete(classifier_instances *) ind;
-	else if (classifierType == KR_LCS)
-		delete(classifier_lcs *) ind;*/
-	else
-		delete (classifier_gabil *)ind;
+    delete (classifier_hyper_list *)ind;
 }
