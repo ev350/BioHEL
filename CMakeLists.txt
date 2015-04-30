@@ -40,6 +40,8 @@ JString.h
 JVector.h
 less_than_test.h
 lex.yy.cpp
+lex_conf.h
+lex_conf.l
 main.cpp
 mtwist.cpp
 mtwist.h
