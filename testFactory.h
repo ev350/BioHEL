@@ -19,7 +19,7 @@
 class testFactory {
     
 public:
-    static test* createInstance(test::Type type, int att, instance *ins) {
+    static test* createInstance(test::Type type, int att, int att1, instance *ins) {
         switch (type) {
             case test::Greater:
                 return new greater_than_test(att, ins);
@@ -29,6 +29,9 @@ public:
                 
             case test::Bounds:
                 return new bounds_test(att, ins);
+                
+            case test::Ratio:
+                return new ratio_test(att, att1, ins);
                 
             default:
                 return nullptr;

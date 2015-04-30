@@ -7,7 +7,6 @@
 #include "classifier_hyper_list.h"
 #include "classifier_hyperrect.h"
 #include "classifier_hyperrect_list.h"
-#include "classifier_hyperrect_list_real.h"
 #include "classifier_hyperrect_list_ratio.h"
 //#include "classifier_hyperrect_sse.h"
 //#include "classifier_rotated_hyperrect.h"

@@ -70,8 +70,6 @@ classifier_hyper_list::~classifier_hyper_list()
 
 void classifier_hyper_list::initializeChromosome()
 {
-    //    cout << "Initialize Chromosome" << endl;
-    
     int i;
     
     instance *ins = NULL;
@@ -102,7 +100,7 @@ void classifier_hyper_list::initializeChromosome()
     rule = new vector<test*>();
     
     for(i = 0; i < selectedAtts.size(); i++) {
-        auto newTest = testFactory::createInstance(type, selectedAtts[i], ins);
+        auto newTest = testFactory::createInstance(type, selectedAtts[i], 0, ins);
         rule->push_back(newTest);
     }
     
@@ -117,7 +115,6 @@ void classifier_hyper_list::initializeChromosome()
 
 void classifier_hyper_list::mutation()
 {
-    //    cout << "Mutation" << endl;
     int attIndex;
     
     modif = 1;
@@ -140,11 +137,8 @@ void classifier_hyper_list::mutation()
     }
 }
 
-/* Print (put to String) */
 void classifier_hyper_list::dumpPhenotype(char *string)
 {
-    //    cout << "Dump Phenotype" << endl;
-    
     stringstream output;
     
     for (int i = 0; i < rule->size(); i++) {
@@ -159,28 +153,22 @@ void classifier_hyper_list::dumpPhenotype(char *string)
 
 int classifier_hyper_list::getSpecificity(int *indexes,double *specificity)
 {
-    //    cout << "Get Specificity" << endl;
     return 1; // Quick fix
 }
 
 void classifier_hyper_list::crossover(classifier * in,
                                                classifier * out1, classifier * out2)
 {
-    //    cout << "Crossover 3 params" << endl;
-    
     crossover_1px(this, (classifier_hyper_list *) in,
                   (classifier_hyper_list *) out1,
                   (classifier_hyper_list *) out2);
 }
 
-/* Used to recombine lists of expressed attributes */
 void classifier_hyper_list::crossover_1px(classifier_hyper_list * in1,
                                                    classifier_hyper_list * in2,
                                                    classifier_hyper_list * out1,
                                                    classifier_hyper_list * out2)
 {
-    //    cout << "Crossover 4 params" << endl;
-    
     vector<test*> *min_rule = in1->rule->size() < in2->rule->size() ? in1->rule : in2->rule;
     vector<test*> *max_rule = in2->rule->size() >= in2->rule->size() ? in1->rule : in2-> rule;
     
@@ -210,8 +198,6 @@ void classifier_hyper_list::postprocess()
 
 void classifier_hyper_list::doSpecialStage(int stage)
 {
-    //    cout << "Do Special Stage" << endl;
-    
     int i;
     
     if (stage == 0) { //Generalize - remove attributes
@@ -256,7 +242,7 @@ void classifier_hyper_list::doSpecialStage(int stage)
             
             int loc = classifier_hyper_list::binarySearch(*rule, 0, rule->size(), selectedAtt) - 1;
             
-            auto newTest = testFactory::createInstance(type, selectedAtt, ins);
+            auto newTest = testFactory::createInstance(type, selectedAtt, 0, ins);
             
             rule->insert(rule->begin() + loc, newTest); //Select type
             
