@@ -31,7 +31,7 @@ public:
                 return new bounds_test(att, ins);
                 
             case test::Ratio:
-                return new ratio_test(att, att1, ins);
+                return new ratio_test(att, att1, false, ins);
                 
             default:
                 return nullptr;

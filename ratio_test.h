@@ -29,8 +29,12 @@ public:
      binary is positive or negate, x/y or y/x
      check if resulting is greater than the fold change (ratio value)
      */
-    inline ratio_test(int attIndex1, int attIndex2, instance *ins) : attribute1(attIndex2) {
+    inline ratio_test(int attIndex1, int attIndex2, bool bSwitch, instance *ins) : attribute1(attIndex2) {
         attribute = attIndex1;
+        
+        // if true then x/y -> y/x
+        if (bSwitch)
+            swap(attribute, attribute1);
         
         float max, min;
         float sizeD = ai.getSizeDomain(attribute1);
@@ -47,7 +51,7 @@ public:
             }
         }
         
-        threshold = min;
+        threshold = min; // How should threshold be calculated?
     }
     
     
@@ -57,7 +61,7 @@ public:
         // float maxD = ai.getMaxDomain(attIndex);
         
         stringstream att;
-        att << "Att " << ai.getAttributeName(attribute1)->cstr() << " is ";
+        att << "Att " << ai.getAttributeName(attribute) << " / " << "Att " << ai.getAttributeName(attribute1)->cstr() << " is ";
         
         bool irr = false;
         if (threshold == minD) {
