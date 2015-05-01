@@ -68,8 +68,10 @@ classifier_hyper_list::~classifier_hyper_list()
     
 }
 
+// Refactor
 void classifier_hyper_list::initializeChromosome()
 {
+    rule = new vector<test*>();
     int i;
     
     instance *ins = NULL;
@@ -81,27 +83,19 @@ void classifier_hyper_list::initializeChromosome()
         }
     }
     
-    JVector<int> selectedAtts;
-    
-    if(tReal->fixExpAtt) {
-        for(i = 0; i < tReal->numExpAtt; i++) {
-            int selected = tReal->sampAtts->getSample();
-            selectedAtts.addElement(selected);
+    if (tReal->fixExpAtt) {
+        for (i = 0; i < tReal->numExpAtt; i++) {
+            auto newTest = testFactory::createInstance(type, ins);
+            rule->push_back(newTest);
         }
-        sortList(selectedAtts);
+        sort(rule->begin(), rule->end());
     } else {
         for (i = 0; i < tGlobals->numAttributesMC; i++) {
             if(!rnd >= tReal->probIrr) {
-                selectedAtts.addElement(i);
+                auto newTest = testFactory::createInstance(type, ins);
+                rule->push_back(newTest);
             }
         }
-    }
-    
-    rule = new vector<test*>();
-    
-    for(i = 0; i < selectedAtts.size(); i++) {
-        auto newTest = testFactory::createInstance(type, selectedAtts[i], 0, ins);
-        rule->push_back(newTest);
     }
     
     if(ins) {
@@ -157,7 +151,7 @@ int classifier_hyper_list::getSpecificity(int *indexes,double *specificity)
 }
 
 void classifier_hyper_list::crossover(classifier * in,
-                                               classifier * out1, classifier * out2)
+                                      classifier * out1, classifier * out2)
 {
     crossover_1px(this, (classifier_hyper_list *) in,
                   (classifier_hyper_list *) out1,
@@ -165,9 +159,9 @@ void classifier_hyper_list::crossover(classifier * in,
 }
 
 void classifier_hyper_list::crossover_1px(classifier_hyper_list * in1,
-                                                   classifier_hyper_list * in2,
-                                                   classifier_hyper_list * out1,
-                                                   classifier_hyper_list * out2)
+                                          classifier_hyper_list * in2,
+                                          classifier_hyper_list * out1,
+                                          classifier_hyper_list * out2)
 {
     vector<test*> *min_rule = in1->rule->size() < in2->rule->size() ? in1->rule : in2->rule;
     vector<test*> *max_rule = in2->rule->size() >= in2->rule->size() ? in1->rule : in2-> rule;
@@ -242,7 +236,7 @@ void classifier_hyper_list::doSpecialStage(int stage)
             
             int loc = classifier_hyper_list::binarySearch(*rule, 0, rule->size(), selectedAtt) - 1;
             
-            auto newTest = testFactory::createInstance(type, selectedAtt, 0, ins);
+            auto newTest = testFactory::createInstance(type, ins);
             
             rule->insert(rule->begin() + loc, newTest); //Select type
             

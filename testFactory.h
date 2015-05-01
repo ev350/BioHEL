@@ -11,30 +11,31 @@
 
 #include <memory>
 
+
+#include "random.h"
 #include "greater_than_test.h"
 #include "less_than_test.h"
 #include "ratio_test.h"
 #include "bounds_test.h"
 
+extern Random rnd;
+
 class testFactory {
     
 public:
-    static test* createInstance(test::Type type, int att, int att1, instance *ins) {
+    static test* createInstance(test::Type type, instance *ins) {
         switch (type) {
             case test::Greater:
-                return new greater_than_test(att, ins);
+                return new greater_than_test(ins);
                 
             case test::Less:
-                return new less_than_test(att, ins);
+                return new less_than_test(ins);
                 
             case test::Bounds:
-                return new bounds_test(att, ins);
+                return new bounds_test(ins);
                 
             case test::Ratio:
-                return new ratio_test(att, att1, false, ins);
-                
-            default:
-                return nullptr;
+                return new ratio_test(rnd(0, 1), ins);
         }
     }
 };

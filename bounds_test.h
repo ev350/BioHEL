@@ -22,8 +22,8 @@ public:
         *this = test;
     }
     
-    bounds_test(int attIndex, instance *ins) {
-        attribute = attIndex;
+    bounds_test(instance *ins) {
+        attribute = tReal->sampAtts->getSample();
         
         float max, min;
         float sizeD = ai.getSizeDomain(attribute);

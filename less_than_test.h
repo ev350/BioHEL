@@ -20,19 +20,19 @@ public:
         *this = test;
     }
     
-    less_than_test(int attIndex, instance *ins) {
-        attribute = attIndex;
+    less_than_test(instance *ins) {
+        attribute = tReal->sampAtts->getSample();
         
         float max, min;
-        float sizeD = ai.getSizeDomain(attIndex);
-        float minD = ai.getMinDomain(attIndex);
+        float sizeD = ai.getSizeDomain(attribute);
+        float minD = ai.getMinDomain(attribute);
         float size = (!rnd * tReal->rangeIntervalSizeInit + tReal->minIntervalSizeInit) * sizeD;
         
         min = minD;
         max = min+size;
         
         if(ins) {
-            float value = ins->realValues[attIndex];
+            float value = ins->realValues[attribute];
             if(value > max) {
                 max = value;
             }

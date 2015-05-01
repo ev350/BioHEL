@@ -20,8 +20,8 @@ public:
         *this = test;
     }
     
-    greater_than_test(int attIndex, instance *ins) {
-        attribute = attIndex;
+    greater_than_test(instance *ins) {
+        attribute = tReal->sampAtts->getSample();
         
         float max, min;
         float sizeD = ai.getSizeDomain(attribute);
