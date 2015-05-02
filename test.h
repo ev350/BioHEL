@@ -27,17 +27,18 @@ public:
     int attribute;
     float threshold;
     
-    double computeLength() {
-        double length = 0.0;
-        
-        float size = ai.getSizeDomain(attribute);
-        float maxD = ai.getMaxDomain(attribute);
-        
-        if(size > 0) {
-            length = 1.0 - (maxD - threshold) / size;
-        }
-        return length;
-    }
+    virtual double computeLength() const = 0;
+//    {
+//        double length = 0.0;
+//        
+//        float size = ai.getSizeDomain(attribute);
+//        float maxD = ai.getMaxDomain(attribute);
+//        
+//        if(size > 0) {
+//            length = 1.0 - (maxD - threshold) / size;
+//        }
+//        return length;
+//    }
     
     void mutate() {
         float newValue, minOffset, maxOffset;

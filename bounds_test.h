@@ -52,6 +52,18 @@ public:
         threshold1 = max;
     }
     
+    virtual double computeLength() const {
+        double length = 0.0;
+        
+        float size = ai.getSizeDomain(attribute);
+        
+        if(size > 0) {
+            length += 1.0 - (threshold1 - threshold) / size;
+        }
+        
+        return length;
+    }
+    
     virtual string getPhenotype() const {
         
         float minD = ai.getMinDomain(attribute);

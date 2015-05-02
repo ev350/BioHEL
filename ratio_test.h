@@ -38,21 +38,36 @@ public:
             swap(attribute, attribute1);
         
         float max, min;
-        float sizeD = ai.getSizeDomain(attribute1);
-        float maxD = ai.getMaxDomain(attribute1);
+        float sizeD = ai.getSizeDomain(attribute) / ai.getSizeDomain(attribute1);
+        float maxD = ai.getMaxDomain(attribute) / ai.getMaxDomain(attribute1);
         float size = (!rnd * tReal->rangeIntervalSizeInit + tReal->minIntervalSizeInit) * sizeD;
         
         max = maxD;
         min = maxD - size;
         
         if(ins) {
-            float value = ins->realValues[attribute1];
+            float value = ins->realValues[attribute] / ins->realValues[attribute1];
             if(value < min) {
                 min = value;
             }
         }
         
         threshold = min; // How should threshold be calculated?
+    }
+    
+    virtual double computeLength() const {
+        double length = 0.0;
+        
+        float size = ai.getSizeDomain(attribute) / ai.getSizeDomain(attribute1);
+        
+//        float minD = ai.getMinDomain(std::min(ai.getMinDomain(attribute), ai.getMinDomain(attribute1)));
+        float maxD = ai.getMaxDomain(attribute) / ai.getMaxDomain(attribute1);
+        
+        if(size > 0) {
+            length = 1.0 - (maxD - threshold) / size;
+        }
+        
+        return length;
     }
     
     
