@@ -47,6 +47,7 @@ public:
 	double minIntervalSizeInit;
 	double rangeIntervalSizeInit;
 
+    float max_ratio; //Euan
 
 	evaluator **evaluators;
 

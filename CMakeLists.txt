@@ -21,6 +21,7 @@ classifier_hyperrect.cpp
 classifier_hyperrect.h
 classifier_hyperrect_list.cpp
 classifier_hyperrect_list.h
+configCodes.h
 testFactory.h
 classifierFitness.cpp
 classifierFitness.h

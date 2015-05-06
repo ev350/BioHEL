@@ -35,7 +35,32 @@ public:
                 return new bounds_test(ins);
                 
             case test::Ratio:
-                return new ratio_test(rnd(0, 1), ins);
+                return new ratio_test(ins);
+                
+            case test::Mixed:
+                return createRandomInstance(ins);
+        }
+    }
+    
+    static test* createRandomInstance(instance *ins) {
+        
+        int testNum = rnd(0, 3);
+        
+        switch (testNum) {
+            case 0:
+                return new greater_than_test(ins);
+                
+            case 1:
+                return new less_than_test(ins);
+                
+            case 2:
+                return new bounds_test(ins);
+                
+            case 3:
+                return new ratio_test(ins);
+                
+            default:
+                return NULL;
         }
     }
 };

@@ -32,6 +32,8 @@ classifierFactory::classifierFactory()
                     classifierType = KR_HYPERRECT_LIST_LESS;
                 } else if(cm.thereIsParameter(USE_RATIO_PREDICATES)) {
                     classifierType = KR_HYPERRECT_LIST_RATIO;
+                } else if (cm.thereIsParameter(USE_MIXED_PREDICATES)) {
+                    classifierType = KR_HYPERRECT_LIST_MIXED;
                 } else {
                     classifierType = KR_HYPERRECT_LIST_REAL;
                 }
@@ -61,6 +63,8 @@ classifier *classifierFactory::createClassifier()
         return new classifier_hyper_list(test::Less);
     if (classifierType == KR_HYPERRECT_LIST_RATIO)
         return new classifier_hyper_list(test::Ratio);
+    if (classifierType == KR_HYPERRECT_LIST_MIXED)
+        return new classifier_hyper_list(test::Mixed);
     
     return new classifier_gabil();
 }

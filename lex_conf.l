@@ -538,6 +538,16 @@ LETTER   [A-Z]
 	cm.setParameter(1,USE_RATIO_PREDICATES);
 }
 
+"USE MIXED PREDICATES" {
+    mb.printf("Use hyperrect list real KR with mixed predicates\n");
+    cm.setParameter(1,USE_MIXED_PREDICATES);
+}
+
+"MAX RATIO "{DIGIT}+"."?{DIGIT}* {
+    cm.setParameter(atof(charFilter(yytext)),MAX_RATIO);
+    mb.printf("Use a max ratio limit of: %f\n" ,atof(charFilter(yytext)));
+}
+
 "DOB PARTITIONS IN WINDOWING" {
 	mb.printf("The creation of the strata in the ILAS windowing will use the DOB method\n");
 	cm.setParameter(1,DOB_PARTITIONS_IN_WINDOWING);

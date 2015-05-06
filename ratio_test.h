@@ -18,6 +18,9 @@ class ratio_test : public test {
     
 public:
     int attribute1;
+    int bSwitch;
+    
+    float sizeD;
     
     inline ratio_test(const ratio_test &test) {
         *this = test;
@@ -29,74 +32,52 @@ public:
      binary is positive or negate, x/y or y/x
      check if resulting is greater than the fold change (ratio value)
      */
-    inline ratio_test(int bSwitch, instance *ins) {
+    inline ratio_test(instance *ins) {
         attribute = tReal->sampAtts->getSample();
         attribute1 = tReal->sampAtts->getSample();
+        bSwitch = rnd(0, 1);
         
         // if true then x/y -> y/x
         if (bSwitch == 1)
             swap(attribute, attribute1);
         
-        float max, min;
-        float sizeD = ai.getSizeDomain(attribute) / ai.getSizeDomain(attribute1);
-        float maxD = ai.getMaxDomain(attribute) / ai.getMaxDomain(attribute1);
-        float size = (!rnd * tReal->rangeIntervalSizeInit + tReal->minIntervalSizeInit) * sizeD;
-        
-        max = maxD;
-        min = maxD - size;
+        sizeD = ai.getSizeDomain(attribute1) / ai.getSizeDomain(attribute);
+        float maxD = tReal->max_ratio;
+        threshold = !rnd * maxD;
         
         if(ins) {
             float value = ins->realValues[attribute] / ins->realValues[attribute1];
-            if(value < min) {
-                min = value;
+            if(value * sizeD < threshold) {
+                threshold = value * sizeD;
             }
         }
         
-        threshold = min; // How should threshold be calculated?
     }
     
     virtual double computeLength() const {
-        double length = 0.0;
-        
-        float size = ai.getSizeDomain(attribute) / ai.getSizeDomain(attribute1);
-        
-//        float minD = ai.getMinDomain(std::min(ai.getMinDomain(attribute), ai.getMinDomain(attribute1)));
-        float maxD = ai.getMaxDomain(attribute) / ai.getMaxDomain(attribute1);
-        
-        if(size > 0) {
-            length = 1.0 - (maxD - threshold) / size;
-        }
-        
-        return length;
+        return 1.0 - threshold / tReal->max_ratio;
     }
     
+    virtual void mutate() {
+        bSwitch = bSwitch ? 0 : 1;
+        swap(attribute, attribute1);
+    }
     
-    virtual string getPhenotype() const {
-        
-        float minD = ai.getMinDomain(attribute1);
-        // float maxD = ai.getMaxDomain(attIndex);
-        
+    virtual string getPhenotype() const {        
         stringstream att;
         att << "Att " << ai.getAttributeName(attribute)->cstr() << " / " << "Att " << ai.getAttributeName(attribute1)->cstr() << " is ";
         
-        bool irr = false;
-        if (threshold == minD) {
-            // Do nothing
-            irr = true;
-        } else {
-            att << "[>" << threshold << "]" << "|";
-        }
+        att << "[>" << threshold << "]" << "|";
         
-        if (!irr)
-            return att.str();
-        else
-            return "";
+        return att.str();
     }
     
     virtual bool isTrue(instance *ins) const {
-        register float value = ins->realValues[attribute1];
+        register float value = ins->realValues[attribute] / ins->realValues[attribute1];
         
-        if (value >= threshold)
+        //        std::cout << ai.getAttributeName(attribute)->cstr() << " / " << ai.getAttributeName(attribute1)->cstr() << " - attsValue: " << value << std::endl;
+        
+        if (value * sizeD > threshold)
             return true;
         return false;
     }

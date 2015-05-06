@@ -21,7 +21,8 @@ public:
         Bounds,
         Greater,
         Less,
-        Ratio
+        Ratio,
+        Mixed
     };
     
     int attribute;
@@ -40,16 +41,17 @@ public:
 //        return length;
 //    }
     
-    void mutate() {
-        float newValue, minOffset, maxOffset;
-        minOffset = maxOffset = 0.5 * ai.getSizeDomain(attribute);
-        newValue = mutationOffset(threshold, minOffset, maxOffset);
-        
-        if (newValue < ai.getMinDomain(attribute)) newValue = ai.getMinDomain(attribute);
-        if (newValue > ai.getMaxDomain(attribute)) newValue = ai.getMaxDomain(attribute);
-        
-        threshold = newValue;
-    }
+    virtual void mutate() = 0;
+//    {
+//        float newValue, minOffset, maxOffset;
+//        minOffset = maxOffset = 0.5 * ai.getSizeDomain(attribute);
+//        newValue = mutationOffset(threshold, minOffset, maxOffset); // 0 to max_ratio
+//        
+//        if (newValue < ai.getMinDomain(attribute)) newValue = ai.getMinDomain(attribute);
+//        if (newValue > ai.getMaxDomain(attribute)) newValue = ai.getMaxDomain(attribute);
+//        
+//        threshold = newValue;
+//    }
     
     float mutationOffset(float geneValue, float offsetMin, float offsetMax) {
         float newValue;

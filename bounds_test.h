@@ -64,26 +64,30 @@ public:
         return length;
     }
     
+    virtual void mutate() {
+        float newValue, minOffset, maxOffset;
+        
+        minOffset = maxOffset = 0.5 * ai.getSizeDomain(attribute);
+        newValue = mutationOffset(threshold, minOffset, maxOffset);
+        
+        if (newValue < ai.getMinDomain(attribute)) newValue = ai.getMinDomain(attribute);
+        if (newValue > ai.getMaxDomain(attribute)) newValue = ai.getMaxDomain(attribute);
+        
+        threshold = newValue;
+        
+        if(threshold > threshold1) {
+            swap(threshold, threshold1);
+        }
+    }
+    
     virtual string getPhenotype() const {
-        
-        float minD = ai.getMinDomain(attribute);
-//        float maxD = ai.getMaxDomain(attribute);
-        
         stringstream att;
         att << "Att " << ai.getAttributeName(attribute)->cstr() << " is ";
         
-        bool irr = true;
-        if (threshold == minD) {
-            
-        } else {
-            irr = false;
-            att << "[" << threshold << "," << threshold1 << "]" << "|";
-        }
+        att << "[" << threshold << "," << threshold1 << "]" << "|";
         
-        if (!irr)
-            return att.str();
-        else
-            return "";
+        return att.str();
+        
     }
     
     virtual bool isTrue(instance *ins) const {

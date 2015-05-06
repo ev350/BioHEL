@@ -25,6 +25,8 @@ timerRealKR::timerRealKR()
     int i;
 
 	tGlobals->probOne = cm.getParameter(PROB_ONE);
+    
+    max_ratio = cm.getParameter(MAX_RATIO); //Euan
 
 	int numAtt=ai.getNumAttributesMC();
 	numExpAtt=(int)cm.getParameter(EXPRESSED_ATT_INIT);
