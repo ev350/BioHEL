@@ -78,7 +78,7 @@ public:
     virtual bool isTrue(instance *ins) const {
         register float value = ins->realValues[attribute];
         
-        if (value < threshold)
+        if (value > threshold)
             return true;
         return false;
     }
