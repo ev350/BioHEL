@@ -77,7 +77,7 @@ public:
         
         //        std::cout << ai.getAttributeName(attribute)->cstr() << " / " << ai.getAttributeName(attribute1)->cstr() << " - attsValue: " << value << std::endl;
         
-        if (value * sizeD > threshold)
+        if ((value * sizeD) > threshold)
             return true;
         return false;
     }
