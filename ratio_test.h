@@ -66,7 +66,7 @@ public:
         } else {
             float newValue, minOffset, maxOffset;
             
-            minOffset = maxOffset = 0.5 * ai.getSizeDomain(attribute);
+            minOffset = maxOffset = 0.5 * sizeD;
             newValue = mutationOffset(threshold, minOffset, maxOffset);
             
             if (newValue < 0) newValue = 0;
