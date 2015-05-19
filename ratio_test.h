@@ -59,13 +59,28 @@ public:
     }
     
     virtual void mutate() {
-        bSwitch = bSwitch ? 0 : 1;
-        swap(attribute, attribute1);
+        if (rnd(0,1)) {
+            bSwitch = bSwitch ? 0 : 1;
+            swap(attribute, attribute1);
+            sizeD = ai.getSizeDomain(attribute1) / ai.getSizeDomain(attribute);
+        } else {
+            float newValue, minOffset, maxOffset;
+            
+            minOffset = maxOffset = 0.5 * ai.getSizeDomain(attribute);
+            newValue = mutationOffset(threshold, minOffset, maxOffset);
+            
+            if (newValue < 0) newValue = 0;
+            if (newValue > tReal->max_ratio) newValue = tReal->max_ratio;
+            
+            threshold = newValue;
+        }
     }
     
     virtual string getPhenotype() const {        
         stringstream att;
-        att << "Att " << ai.getAttributeName(attribute)->cstr() << " / " << "Att " << ai.getAttributeName(attribute1)->cstr() << " is ";
+        
+        att << "Att " << ai.getAttributeName(attribute)->cstr() << " / " << "Att " << ai.getAttributeName(attribute1)->cstr() << " sizeD:" << sizeD << " is ";
+    
         
         att << "[>" << threshold << "]" << "|";
         

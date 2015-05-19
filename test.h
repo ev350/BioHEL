@@ -29,29 +29,8 @@ public:
     float threshold;
     
     virtual double computeLength() const = 0;
-//    {
-//        double length = 0.0;
-//        
-//        float size = ai.getSizeDomain(attribute);
-//        float maxD = ai.getMaxDomain(attribute);
-//        
-//        if(size > 0) {
-//            length = 1.0 - (maxD - threshold) / size;
-//        }
-//        return length;
-//    }
     
     virtual void mutate() = 0;
-//    {
-//        float newValue, minOffset, maxOffset;
-//        minOffset = maxOffset = 0.5 * ai.getSizeDomain(attribute);
-//        newValue = mutationOffset(threshold, minOffset, maxOffset); // 0 to max_ratio
-//        
-//        if (newValue < ai.getMinDomain(attribute)) newValue = ai.getMinDomain(attribute);
-//        if (newValue > ai.getMaxDomain(attribute)) newValue = ai.getMaxDomain(attribute);
-//        
-//        threshold = newValue;
-//    }
     
     float mutationOffset(float geneValue, float offsetMin, float offsetMax) {
         float newValue;
