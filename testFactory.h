@@ -44,6 +44,7 @@ public:
         return NULL;
     }
     
+private:
     static test* createRandomInstance(instance *ins) {
         
         int testNum = rnd(0, 3);
