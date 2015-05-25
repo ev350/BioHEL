@@ -40,6 +40,8 @@ public:
             case test::Mixed:
                 return createRandomInstance(ins);
         }
+        
+        return NULL;
     }
     
     static test* createRandomInstance(instance *ins) {
@@ -59,9 +61,8 @@ public:
             case 3:
                 return new ratio_test(ins);
                 
-            default:
-                return NULL;
         }
+        return NULL;
     }
 };
 

@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <strings.h>
 #include <sstream>
+#include <algorithm>
 #include "attributesInfo.h"
 #include "timerGlobals.h"
 #include "timerMutation.h"
@@ -85,14 +86,14 @@ void classifier_hyper_list::initializeChromosome()
     
     if (tReal->fixExpAtt) {
         for (i = 0; i < tReal->numExpAtt; i++) {
-            auto newTest = testFactory::createInstance(type, ins);
+            test* newTest = testFactory::createInstance(type, ins);
             rule->push_back(newTest);
         }
-        sort(rule->begin(), rule->end());
+        std::sort(rule->begin(), rule->end());
     } else {
         for (i = 0; i < tGlobals->numAttributesMC; i++) {
             if(!rnd >= tReal->probIrr) {
-                auto newTest = testFactory::createInstance(type, ins);
+                test* newTest = testFactory::createInstance(type, ins);
                 rule->push_back(newTest);
             }
         }
@@ -168,8 +169,8 @@ void classifier_hyper_list::crossover_1px(classifier_hyper_list * in1,
     
     int cutPoint = rnd(0, max_rule->size() - 1);
     
-    vector<test*>::const_iterator cut = max_rule->begin() + cutPoint;
-    vector<test*>::const_iterator last = max_rule->end();
+    vector<test*>::iterator cut = max_rule->begin() + cutPoint;
+    vector<test*>::iterator last = max_rule->end();
     vector<test*> max_rule_contrib(cut, last);
     
     max_rule->erase(cut, last);
@@ -236,7 +237,7 @@ void classifier_hyper_list::doSpecialStage(int stage)
             
             int loc = classifier_hyper_list::binarySearch(*rule, 0, rule->size(), selectedAtt) - 1;
             
-            auto newTest = testFactory::createInstance(type, ins);
+            test* newTest = testFactory::createInstance(type, ins);
             
             rule->insert(rule->begin() + loc, newTest); //Select type
             
